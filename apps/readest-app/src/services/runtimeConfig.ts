@@ -7,6 +7,10 @@ export interface ReadestRuntimeConfig {
   translationFixedQuota?: number;
   fontBaseUrl?: string;
   selfHosted?: boolean;
+  // Optional extra OAuth/OIDC provider on the sign-in page, for deployments
+  // that enable one in gotrue (e.g. Keycloak). Empty hides the button.
+  ssoProvider?: string;
+  ssoLabel?: string;
 }
 
 declare global {
@@ -56,4 +60,37 @@ export const getServerRuntimeConfig = (): ReadestRuntimeConfig => ({
   // and an empty string would build root-relative font URLs.
   fontBaseUrl:
     process.env['FONT_BASE_URL'] || process.env['NEXT_PUBLIC_FONT_BASE_URL'] || undefined,
+  // `||` not `??` for the same reason as fontBaseUrl: compose passes these
+  // through even when unset, and an empty provider must mean "hidden".
+  ssoProvider: process.env['SSO_PROVIDER'] || process.env['NEXT_PUBLIC_SSO_PROVIDER'] || undefined,
+  ssoLabel: process.env['SSO_LABEL'] || process.env['NEXT_PUBLIC_SSO_LABEL'] || undefined,
 });
+
+export interface SsoProviderConfig {
+  provider: string;
+  label: string;
+}
+
+const DEFAULT_SSO_LABELS: Record<string, string> = {
+  keycloak: 'Keycloak',
+};
+
+/**
+ * Resolves the optional extra OAuth/OIDC provider button (self-hosted SSO).
+ * Web/Docker builds get it from the runtime config injected by
+ * `/runtime-config.js`; Tauri builds have no runtime config and fall back to
+ * the `NEXT_PUBLIC_*` envs baked at build time.
+ */
+export const getSsoProviderConfig = (): SsoProviderConfig | undefined => {
+  const runtimeConfig = getRuntimeConfig();
+  const provider = runtimeConfig?.ssoProvider || process.env['NEXT_PUBLIC_SSO_PROVIDER'];
+  if (!provider) return undefined;
+
+  const label =
+    runtimeConfig?.ssoLabel ||
+    process.env['NEXT_PUBLIC_SSO_LABEL'] ||
+    DEFAULT_SSO_LABELS[provider] ||
+    'SSO';
+
+  return { provider, label };
+};

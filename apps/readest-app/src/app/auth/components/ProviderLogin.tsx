@@ -1,6 +1,10 @@
 import clsx from 'clsx';
+import type { Provider } from '@supabase/supabase-js';
 
-export type OAuthProvider = 'google' | 'apple' | 'azure' | 'github' | 'discord';
+// Supabase's `Provider` union covers the built-in providers rendered here plus
+// the ones a self-hosted gotrue can enable without a code change (e.g.
+// `keycloak`, `gitlab`, `custom:<name>`).
+export type OAuthProvider = Provider;
 
 interface ProviderLoginProp {
   provider: OAuthProvider;

@@ -2,8 +2,10 @@ import { useRef } from 'react';
 import Image from 'next/image';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { FcGoogle } from 'react-icons/fc';
-import { FaApple, FaGithub, FaDiscord } from 'react-icons/fa';
+import { FaApple, FaGithub, FaDiscord, FaUserShield } from 'react-icons/fa';
+import { SiKeycloak } from 'react-icons/si';
 import { useTranslation } from '@/hooks/useTranslation';
+import { getSsoProviderConfig } from '@/services/runtimeConfig';
 import { ProviderLogin, type OAuthProvider } from './ProviderLogin';
 import EmailPasswordAuth from './EmailPasswordAuth';
 import ReadestCloudOptIn from './ReadestCloudOptIn';
@@ -22,6 +24,10 @@ export default function AuthPanel({
   onProviderSignIn,
 }: AuthPanelProps) {
   const _ = useTranslation();
+  // Optional extra OAuth/OIDC provider (self-hosted SSO, e.g. Keycloak),
+  // configured on the deployment and enabled in gotrue. The auth page renders
+  // only after mount, so the runtime config is already on `window` here.
+  const ssoProvider = getSsoProviderConfig();
   // `signInWithOAuth` redirects the whole page on web, which can cut off the
   // opt-in's settings write. Hold sign-in until it has landed. Null until the
   // user actually touches the checkbox, so the common path adds no delay.
@@ -67,6 +73,14 @@ export default function AuthPanel({
           Icon={FaDiscord}
           label={_('Sign in with {{provider}}', { provider: 'Discord' })}
         />
+        {ssoProvider && (
+          <ProviderLogin
+            provider={ssoProvider.provider as OAuthProvider}
+            handleSignIn={handleProviderSignIn}
+            Icon={ssoProvider.provider === 'keycloak' ? SiKeycloak : FaUserShield}
+            label={_('Sign in with {{provider}}', { provider: ssoProvider.label })}
+          />
+        )}
       </div>
       <div className='flex w-full items-center gap-3' aria-hidden='true'>
         <hr className='border-base-300 flex-1 border-t' />
