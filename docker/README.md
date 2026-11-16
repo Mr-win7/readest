@@ -75,6 +75,46 @@ published tags:
 - `main`: rolling image from the default branch
 - `sha-<commit>`: immutable commit tag
 
+### Sign in with Keycloak (optional)
+
+self-hosted gotrue can authenticate against Keycloak, and the client renders an
+extra button for it. three settings are involved:
+
+1. in Keycloak, create an OpenID Connect client (confidential, standard flow)
+   and register the auth callback as a valid redirect URI: kong serves it at
+   `<public-origin>/auth/v1/callback` (for the default compose setup,
+   `http://localhost:8000/auth/v1/callback`; with a custom domain,
+   `https://your-domain.com/auth/v1/callback`).
+2. enable the provider for gotrue and the button for the client in `docker/.env`:
+
+```env
+KEYCLOAK_ENABLED=true
+KEYCLOAK_URL=https://keycloak.example.com/realms/readest
+KEYCLOAK_CLIENT_ID=readest
+KEYCLOAK_SECRET=your-client-secret
+KEYCLOAK_REDIRECT_URI=http://localhost:8000/auth/v1/callback
+
+SSO_PROVIDER=keycloak
+SSO_LABEL=Keycloak
+```
+
+3. recreate the two containers that read them:
+
+```bash
+docker compose up -d auth client
+```
+
+the sign-in page then shows a button for the provider below the built-in ones.
+`SSO_PROVIDER` is passed through as gotrue's `provider` parameter, so any
+provider gotrue supports works (`keycloak`, `gitlab`, `custom:<name>`, …), and
+`SSO_LABEL` only changes the button text (it defaults to the provider name, or
+`SSO` for providers without a built-in label).
+when readest is served from a custom domain, make sure `SITE_URL` and
+`ADDITIONAL_REDIRECT_URLS` cover it (see
+[Serving from a custom domain](#serving-from-a-custom-domain)), or gotrue
+rejects the redirect back to the app. leaving `SSO_PROVIDER` empty hides the
+button.
+
 ### OPDS catalogs on a private network
 
 The web OPDS proxy blocks private, loopback and link-local addresses by default,

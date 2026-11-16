@@ -78,6 +78,14 @@ services:
       GOTRUE_SMTP_PASS: ${SMTP_PASS}
       GOTRUE_SMTP_ADMIN_EMAIL: ${SMTP_ADMIN_EMAIL}
       GOTRUE_SMTP_SENDER_NAME: ${SMTP_SENDER_NAME}
+      # Optional Keycloak (OIDC) sign-in. Disabled unless KEYCLOAK_ENABLED=true.
+      # The redirect URI is kong's auth callback; it must be registered on the
+      # Keycloak client and match the public origin of this deployment.
+      GOTRUE_EXTERNAL_KEYCLOAK_ENABLED: ${KEYCLOAK_ENABLED:-false}
+      GOTRUE_EXTERNAL_KEYCLOAK_URL: ${KEYCLOAK_URL:-}
+      GOTRUE_EXTERNAL_KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-}
+      GOTRUE_EXTERNAL_KEYCLOAK_SECRET: ${KEYCLOAK_SECRET:-}
+      GOTRUE_EXTERNAL_KEYCLOAK_REDIRECT_URI: ${KEYCLOAK_REDIRECT_URI:-http://localhost:8000/auth/v1/callback}
 
   rest:
     container_name: supabase-rest
@@ -151,6 +159,10 @@ services:
       STORAGE_FIXED_QUOTA: ${STORAGE_FIXED_QUOTA:-1073741824}
       TRANSLATION_FIXED_QUOTA: ${TRANSLATION_FIXED_QUOTA:-50000}
       FONT_BASE_URL: ${FONT_BASE_URL:-}
+      # Optional extra sign-in button (see the Keycloak section of the README).
+      # Leave empty to hide it; SSO_PROVIDER must match a provider enabled in gotrue.
+      SSO_PROVIDER: ${SSO_PROVIDER:-}
+      SSO_LABEL: ${SSO_LABEL:-}
     depends_on:
       - kong
       - minio
